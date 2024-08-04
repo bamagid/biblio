@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Livre;
 use App\Http\Requests\StoreLivreRequest;
 use App\Http\Requests\UpdateLivreRequest;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
 
 class LivreController extends Controller
@@ -27,8 +28,14 @@ class LivreController extends Controller
     public function store(StoreLivreRequest $request)
     {
         Gate::authorize('create', Livre::class);
+        $livre = new Livre();
 
-        $livre = Livre::create($request->validated());
+        $livre->fill($request->validated());
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $livre->image = $image->store('images', 'public');
+        }
+        $livre->save();
         return response()->json([
             "message" => "Livre ajouté avec succès ",
             'livre' => $livre,
@@ -52,7 +59,16 @@ class LivreController extends Controller
     public function update(UpdateLivreRequest $request, Livre $livre)
     {
         Gate::authorize('update', $livre);
-        $livre->update($request->validated());
+        $livre->fill($request->validated());
+        if ($request->file('image')) {
+
+            if (File::exists(storage_path($livre->image))) {
+                File::delete(storage_path($livre->image));
+            }
+            $image = $request->file('image');
+            $livre->image = $image->store('images', 'public');
+        }
+        $livre->update();
         return response()->json([
             "message" => "Livre modifié avec succès ",
             'livre' => $livre,
