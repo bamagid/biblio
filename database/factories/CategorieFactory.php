@@ -20,10 +20,10 @@ class CategorieFactory extends Factory
             'Roman', 'Poésie', 'Science-fiction', 'Histoire', 'Biographie', 'Philosophie', 'Religion', 'Art', 'Théâtre', 'Économie', 'Politique', 'Sociologie'
         ];
         return [
-            'nom' => $this->faker->unique()->randomElement($categories),
-            'description' => $this->faker->sentence,
+            'nom' => $this->faker->randomElement($categories),
+            'description' => $this->faker->text(200),
             'created_at' => now(),
-            'updated_at' => now(),
+            "updated_at" => now(),
         ];
     }
 }

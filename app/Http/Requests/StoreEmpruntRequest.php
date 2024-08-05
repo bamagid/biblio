@@ -8,6 +8,8 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 
 class StoreEmpruntRequest extends FormRequest
 {
+
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -16,18 +18,23 @@ class StoreEmpruntRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => ['required', 'exists:users,id'],
-            'livre_id' => ['required', 'exists:livres,id'],
-            'date_emprunt' => ['sometimes', 'date'],
-            'date_retour_prevue' => ['required', 'date', 'after:now'],
+            "user_id" => ["required", "integer", "exists:users,id"],
+            "livre_id" => ["required", "integer", "exists:livres,id"],
+            "date_emprunt" => ["sometimes", "date"],
+            "date_retour_prevue" => ["required", "date", "after:now"],
         ];
     }
 
     public function failedValidation(Validator $validator)
     {
-        throw new HttpResponseException(response()->json(
-            ['success' => false,             'errors' => $validator->errors()],
-            422
-        ));
+        throw new HttpResponseException(
+            response()->json(
+                [
+                    "success" => false,
+                    "errors" => $validator->errors()
+                ],
+                422
+            )
+        );
     }
 }

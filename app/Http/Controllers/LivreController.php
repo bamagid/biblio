@@ -7,6 +7,7 @@ use App\Http\Requests\StoreLivreRequest;
 use App\Http\Requests\UpdateLivreRequest;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
+use phpDocumentor\Reflection\Types\This;
 
 class LivreController extends Controller
 {
@@ -16,11 +17,10 @@ class LivreController extends Controller
     public function index()
     {
         $livres = Livre::all();
-        return response()->json([
-            "message" => "Liste des livres recuperer avec succés ",
-            'livres' => $livres,
-        ], 200);
+        return $this->CustomJsonresponse("La liste des livres", $livres);
     }
+
+
 
     /**
      * Store a newly created resource in storage.
@@ -29,17 +29,10 @@ class LivreController extends Controller
     {
         Gate::authorize('create', Livre::class);
         $livre = new Livre();
-
         $livre->fill($request->validated());
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $livre->image = $image->store('images', 'public');
-        }
+        $livre->image = $request->file('image')->store('images', 'public');
         $livre->save();
-        return response()->json([
-            "message" => "Livre ajouté avec succès ",
-            'livre' => $livre,
-        ], 201);
+        return $this->CustomJsonresponse("Livre créé avec succès", $livre);
     }
 
     /**
@@ -47,10 +40,7 @@ class LivreController extends Controller
      */
     public function show(Livre $livre)
     {
-        return response()->json([
-            "message" => "Livre récupéré avec succès ",
-            'livre' => $livre,
-        ], 200);
+        return $this->CustomJsonresponse("Livre trouvé", $livre);
     }
 
     /**
@@ -60,19 +50,14 @@ class LivreController extends Controller
     {
         Gate::authorize('update', $livre);
         $livre->fill($request->validated());
-        if ($request->file('image')) {
-
+        if ($request->hasFile('image')) {
             if (File::exists(storage_path($livre->image))) {
                 File::delete(storage_path($livre->image));
             }
-            $image = $request->file('image');
-            $livre->image = $image->store('images', 'public');
+            $livre->image = $request->file('image')->store('images', 'public');
         }
         $livre->update();
-        return response()->json([
-            "message" => "Livre modifié avec succès ",
-            'livre' => $livre,
-        ], 200);
+        return $this->CustomJsonresponse("Livre modifié avec succès", $livre);
     }
 
     /**
@@ -82,36 +67,41 @@ class LivreController extends Controller
     {
         Gate::authorize('delete', $livre);
         $livre->delete();
-        return response()->json([
-            "message" => "Livre supprimé avec succès ",
-        ], 200);
+        return $this->CustomJsonresponse("Livre archivé avec succès", $livre);
     }
     public function restore($id)
     {
         $livre = Livre::onlyTrashed()->where('id', $id)->first();
         Gate::authorize('restore', $livre);
-        $livre->restore();
-        return response()->json([
-            "message" => "Livres restaurés avec succès ",
-            'livre' => $livre,
-        ], 200);
+        if ($livre) {
+            $livre->restore();
+            return $this->CustomJsonresponse("Livre rétabli avec succès", $livre);
+        }
+        return $this->CustomJsonresponse("Livre introuvable", null, 404);
     }
     public function forceDelete($id)
     {
         $livre = Livre::onlyTrashed()->where('id', $id)->first();
         Gate::authorize('forceDelete', $livre);
-        $livre->forceDelete();
-        return response()->json([
-            "message" => "Livre supprimé définitivement avec succès ",
-        ], 200);
+        if ($livre) {
+            $livre->forceDelete();
+            return $this->CustomJsonresponse("Livre supprimé définitivement", $livre);
+        }
+        return $this->CustomJsonresponse("Livre introuvable", null, 404);
     }
-    public function trashed()
+    public function Trashed()
     {
-
         $livres = Livre::onlyTrashed()->get();
-        return response()->json([
-            "message" => "Liste des livres supprimés avec succès ",
-            'livres' => $livres,
-        ], 200);
+        Gate::authorize('viewAny', Livre::class);
+        return $this->CustomJsonresponse("Livres archivés", $livres);
+    }
+    public function emptyTrashes()
+    {
+        $livres = Livre::onlyTrashed()->get();
+        foreach ($livres as $livre) {
+            Gate::authorize('forceDelete', $livre);
+        }
+        $livres->each->forceDelete();
+        return $this->CustomJsonresponse("Tous les livres archivés ont été supprimés définitivement", null);
     }
 }

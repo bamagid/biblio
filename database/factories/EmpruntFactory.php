@@ -17,11 +17,11 @@ class EmpruntFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => 3,
-            'livre_id' => $this->faker->numberBetween(1, 5),
-            'date_emprunt' => $this->faker->dateTimeBetween('-1 month', 'now'),
-            'date_retour_prevue' => $this->faker->dateTimeBetween('now', '+2 weeks'),
-            'date_retour_reelle' => null,
+            "user_id" => $this->faker->numberBetween(1, 6),
+            "livre_id" => $this->faker->numberBetween(1, 10),
+            "date_emprunt" => $this->faker->dateTimeBetween('-30 days', 'now'),
+            "date_retour_prevue" => $this->faker->dateTimeBetween('now', '+30 days'),
+            "date_retour_reelle" => null
         ];
     }
 }

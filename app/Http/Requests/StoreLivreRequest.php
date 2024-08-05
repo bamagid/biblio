@@ -16,23 +16,25 @@ class StoreLivreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'isbn' => ["required", "string", "unique:livres,isbn"],
-            "categorie_id" => ["required", "string", "exists:categories,id"],
-            'titre' => ['required', 'string', 'max:255'],
-            'auteur' => ['required', 'string', 'max:255'],
-            'date_publication' => ['required', 'date', 'before:now'],
-            "quantite" => ['required', "integer", "min:1"],
-            'image' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            "categorie_id" => ['required', 'string', 'exists:categories,id'],
+            "isbn" => ['required', 'string', 'unique:livres,isbn'],
+            "date_publication" => ['required', 'date', 'before:now'],
+            "titre" => ['required', 'string', 'min:5', 'max:255'],
+            "auteur" => ['required', 'string', 'min:3', 'max:255'],
+            "quantite" => ['required', 'integer', 'min:1'],
+            "image" => ['required', "image", "mimes:png,jpg,jpeg", "max:2048"]
         ];
     }
     public function failedValidation(Validator $validator)
     {
-        throw new HttpResponseException(response()->json(
-            [
-                'success' => false,
-                'errors' => $validator->errors()
-            ],
-            422
-        ));
+        throw new HttpResponseException(
+            response()->json(
+                [
+                    "success" => false,
+                    "errors" => $validator->errors()
+                ],
+                422
+            )
+        );
     }
 }

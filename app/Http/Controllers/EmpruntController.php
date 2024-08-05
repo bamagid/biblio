@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Emprunt;
 use App\Http\Requests\StoreEmpruntRequest;
+use App\Http\Requests\UpdateEmpruntRequest;
 use App\Models\Livre;
+use Illuminate\Support\Facades\Gate;
 
 class EmpruntController extends Controller
 {
@@ -13,40 +15,35 @@ class EmpruntController extends Controller
      */
     public function index()
     {
+        Gate::authorize('viewAny', Emprunt::class);
         $emprunts = Emprunt::all();
         $emprunts->each->user;
         $emprunts->each->livre;
-        return response()->json([
-            "message" => "Liste des emprunts",
-            'emprunts' => $emprunts
-        ]);
+        return $this->CustomJsonResponse("Liste des emprunts", $emprunts);
     }
+
 
     /**
      * Store a newly created resource in storage.
      */
     public function store(StoreEmpruntRequest $request)
     {
+        Gate::authorize('create', Emprunt::class);
         $livre = Livre::findOrFail($request->livre_id);
-        if ($livre->quantite > 0) {
-            $livre->update(['quantite' => $livre->quantite - 1, 'disponible' => true]);
-        } else {
-            $livre->update(['disponible' => false]);
-            return response()->json([
-                "message" => "Livre indisponible veuillez Patienter le temps qu'il soit disponible",
-                'emprunt' => null
-            ]);
+        if ($livre->disponible == false || $livre->quantite == 0) {
+            return $this->CustomJsonResponse("Livre indisponible", null, 400);
         }
         $emprunt = new Emprunt();
         $emprunt->fill($request->validated());
-        if ($request->date_emprunt == "") {
-            $emprunt->date_emprunt = now()->format('Y-m-d');
+        if ($emprunt->date_emprunt == null) {
+            $emprunt->date_emprunt = date('Y-m-d');
         }
         $emprunt->save();
-        return response()->json([
-            "message" => "Emprunt créé avec succés",
-            'emprunt' => $emprunt
-        ], 201);
+        $livre->update(['quantite' => $livre->quantite - 1,]);
+        if ($livre->quantite == 0) {
+            $livre->update(['disponible' => false]);
+        }
+        return $this->CustomJsonResponse("Emprunt créé avec succès", $emprunt);
     }
 
     /**
@@ -54,13 +51,12 @@ class EmpruntController extends Controller
      */
     public function show(Emprunt $emprunt)
     {
+        Gate::authorize('view', $emprunt);
         $emprunt->user;
         $emprunt->livre;
-        return response()->json([
-            "message" => "Emprunt recuperé avec succès",
-            'emprunt' => $emprunt
-        ]);
+        return $this->CustomJsonResponse("Details de l'emprunt", $emprunt);
     }
+
 
 
     /**
@@ -68,23 +64,15 @@ class EmpruntController extends Controller
      */
     public function update(Emprunt $emprunt)
     {
-        if ($emprunt->date_retour_reelle == null) {
-
-            $emprunt->update([
-                "date_retour_reelle" => now()->format('Y-m-d'),
-            ]);
-            $livre = Livre::findOrFail($emprunt->livre_id);
-            if ($livre->quantite >= 0) {
-                $livre->update(['quantite' => $livre->quantite + 1, 'disponible' => true]);
-            }
-            return response()->json([
-                "message" => "Emprunt mis à jour avec succès",
-                'emprunt' => $emprunt
-            ]);
-        } else {
-            return response()->json([
-                "message" => "Vous  ne pouvez rendre le meme emprunt deux fois"
-            ], 403);
+        Gate::authorize('update', $emprunt);
+        if ($emprunt->date_retour_reelle !== null) {
+            return $this->CustomJsonResponse("Impossible de modifier un emprunt qui a déjà été retourné", null, 400);
         }
+        $emprunt->update(["date_retour_reelle" => date('Y-m-d')]);
+        $emprunt->livre->update([
+            'quantite' => $emprunt->livre->quantite + 1,
+            'disponible' => true
+        ]);
+        return $this->CustomJsonResponse("Emprunt retourné avec succès", $emprunt);
     }
 }

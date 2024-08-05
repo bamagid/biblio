@@ -8,8 +8,16 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\Mailer\Exception\TransportException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
+
+function jsonResponse($e, $status, $defaultMessage)
+{
+    return response()->json(
+        ['error' => app()->environment('local') ? $e->getMessage() : $defaultMessage],
+        $status
+    );
+}
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -22,39 +30,43 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        if ($exceptions instanceof HttpException) {
-            return response()->json(
-                app()->environment('local') ? ['error' => $exceptions->getMessage()] : ['error' => "Httpexception"],
-                $exceptions->getStatusCode()
-            );
-        } elseif (
-            $exceptions instanceof QueryException ||
-            $exceptions instanceof PDOException
-        ) {
-            return response()->json(
-                app()->environment('local') ?
-                    ['error' => $exceptions->getMessage()] : ["error" => "Query exception"],
-                500
-            );
-        } elseif ($exceptions instanceof BadMethodCallException) {
-            return response()->json(app()->environment('local') ?
-                ['error' => $exceptions->getMessage()] : ["error" => "Bad method call"], 405);
-        } elseif ($exceptions instanceof TransportException) {
-            return response()->json(app()->environment('local') ?
-                ['error' => $exceptions->getMessage()] : ["error" => "Transport Exception"], 500);
-        } elseif ($exceptions instanceof ModelNotFoundException) {
-            return response()->json(app()->environment('local') ?
-                ['error' => $exceptions->getMessage()] : ["error" => "Model Not Found"], 404);
-        } else if ($exceptions instanceof InvalidArgumentException) {
-            return response()->json(app()->environment('local') ?
-                ['error' => $exceptions->getMessage()] : ["error" => "Json Malformed exception"], 500);
-        } elseif (
-            $exceptions instanceof AuthorizationException
-        ) {
-            return response()->json(['error' => $exceptions->getMessage()], 403);
-        } elseif ($exceptions instanceof AuthenticationException) {
-            return response()->json(['error' => $exceptions->getMessage()], 401);
-        } elseif ($exceptions instanceof RouteNotFoundException) {
-            return response()->json(['error' => $exceptions->getMessage()], 404);
-        }
+        $exceptions->render(function (RouteNotFoundException $e) {
+            return jsonResponse($e, 404, "Route not found");
+        });
+
+        $exceptions->render(function (NotFoundHttpException $e) {
+            return jsonResponse($e, 404, "Not found");
+        });
+
+        $exceptions->render(function (HttpException $e) {
+            return jsonResponse($e, $e->getStatusCode(), "HttpException");
+        });
+
+        $exceptions->render(function (QueryException $e) {
+            return jsonResponse($e, 500, "Query exception");
+        });
+
+        $exceptions->render(function (PDOException $e) {
+            return jsonResponse($e, 500, "PDO exception");
+        });
+
+        $exceptions->render(function (BadMethodCallException $e) {
+            return jsonResponse($e, 405, "Bad method call");
+        });
+
+        $exceptions->render(function (ModelNotFoundException $e) {
+            return jsonResponse($e, 404, "Model not found");
+        });
+
+        $exceptions->render(function (InvalidArgumentException $e) {
+            return jsonResponse($e, 500, "Invalid argument");
+        });
+
+        $exceptions->render(function (AuthorizationException $e) {
+            return jsonResponse($e, 403, "Unauthorized");
+        });
+
+        $exceptions->render(function (AuthenticationException $e) {
+            return jsonResponse($e, 401, "Authentication error");
+        });
     })->create();

@@ -16,7 +16,6 @@ class LivreFactory extends Factory
      */
     public function definition(): array
     {
-
         $livres = [
             ['titre' => 'Les Petits Enfants de la rue', 'auteur' => 'Léopold Sédar Senghor'],
             ['titre' => 'De la démocratie en Amérique', 'auteur' => 'Alexis de Tocqueville'],
@@ -32,18 +31,16 @@ class LivreFactory extends Factory
         ];
 
         $livre = $this->faker->randomElement($livres);
-
         return [
-            'titre' => $livre['titre'],
-            'auteur' => $livre['auteur'],
-            "categorie_id" => $this->faker->numberBetween(1, 5),
-            'isbn' => $this->faker->isbn13(),
-            'date_publication' => $this->faker->dateTimeBetween('-50 years', 'now'),
-            'image' => $this->faker->imageUrl(),
-            'quantite' => $this->faker->numberBetween(1, 30),
-            'disponible' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
+            "titre" => $livre["titre"],
+            "auteur" => $livre["auteur"],
+            "isbn" => $this->faker->isbn13(),
+            "categorie_id" => $this->faker->numberBetween(1, 8),
+            "date_publication" => $this->faker->dateTimeBetween("-30 years", "now"),
+            "quantite" => $this->faker->numberBetween(1, 20),
+            "disponible" => true,
+            "created_at" => now(),
+            "updated_at" => now(),
         ];
     }
 }

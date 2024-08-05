@@ -8,15 +8,20 @@ use Illuminate\Auth\Access\Response;
 
 class LivrePolicy
 {
-
+    public function viewAny(User $user): Response
+    {
+        return $user->role === 'admin' ?
+            Response::allow() :
+            Response::deny('Vous ne pouvez pas voir les livres qui sont dans la corbeille.');
+    }
     /**
      * Determine whether the user can create models.
      */
     public function create(User $user): Response
     {
-        return $user->role == "admin" || $user->role == "personnel" ?
+        return $user->role === 'admin' || $user->role === 'personnel' ?
             Response::allow() :
-            Response::deny("Vous n'avez pas les permissions pour ajouter un livre");
+            Response::deny('Vous n\'avez pas les droits pour créer un livre.');
     }
 
     /**
@@ -24,9 +29,9 @@ class LivrePolicy
      */
     public function update(User $user, Livre $livre): Response
     {
-        return $user->role == "admin" || $user->role == "personnel" ?
+        return $user->role === 'admin' || $user->role == "personnel" ?
             Response::allow() :
-            Response::deny("Vous n'avez pas les permissions pour modifier un livre");
+            Response::deny('Vous n\'avez pas les droits pour modifier ce livre.');
     }
 
     /**
@@ -34,9 +39,9 @@ class LivrePolicy
      */
     public function delete(User $user, Livre $livre): Response
     {
-        return $user->role == "admin" || $user->role == "personnel" ?
+        return $user->role === 'admin' || $user->role === "personnel" ?
             Response::allow() :
-            Response::deny("Vous n'avez pas les permissions pour supprimé un livre");
+            Response::deny('Vous n\'avez pas les droits pour supprimer ce livre.');
     }
 
     /**
@@ -44,9 +49,9 @@ class LivrePolicy
      */
     public function restore(User $user, Livre $livre): Response
     {
-        return $user->role == "admin" && $livre ?
+        return $user->role === 'admin' ?
             Response::allow() :
-            Response::deny("Vous n'avez pas les permissions pour restorer un livre");
+            Response::deny('Vous n\'avez pas les droits pour restaurer ce livre.');
     }
 
     /**
@@ -54,8 +59,8 @@ class LivrePolicy
      */
     public function forceDelete(User $user, Livre $livre): Response
     {
-        return $user->role == "admin" ?
+        return $user->role === 'admin' ?
             Response::allow() :
-            Response::deny("Vous n'avez pas les permissions pour Supprimer un livre definitivement");
+            Response::deny('Vous n\'avez pas les droits pour supprimer définitivement ce livre.');
     }
 }

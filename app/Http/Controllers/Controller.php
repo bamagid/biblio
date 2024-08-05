@@ -4,11 +4,8 @@ namespace App\Http\Controllers;
 
 abstract class Controller
 {
-  public function customJsonResponse($message, $data, $code = 200)
+  public static function CustomJsonResponse($message, $data, $status = 200)
   {
-    return response()->json([
-      "message" => $message,
-      "data" => $data
-    ], $code);
+    return response()->json(['message' => $message, 'data' => $data], $status);
   }
 }
