@@ -6,6 +6,27 @@ use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
+
+   public function register(StoreUserRequest $request)
+    {
+
+        User::create([
+            "nom" => $request->nom,
+            "prenom" => $request->prenom,
+            "role" => "membre",
+            "email" => $request->email,
+            "password" => bcrypt($request->password)
+        ]);
+
+        return response()->json([
+            "status" => true,
+            "message" => "Utilisateur enregistré avec succés",
+
+        ]);
+    }
+
+
+
     public function login(Request $request)
     {
         $validator = validator($request->all(), [
